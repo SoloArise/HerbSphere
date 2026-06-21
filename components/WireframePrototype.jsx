@@ -1,0 +1,767 @@
+"use client";
+
+import { useState } from "react";
+
+// Shared Components
+
+function WireBox({
+  h,
+  label,
+  className = "",
+}) {
+  return (
+    <div
+      className={`w-full bg-[#d9d9d9] border border-[#999] flex items-center justify-center ${className}`}
+      style={{ height: h }}
+    >
+      {label && (
+        <span className="text-[#555] text-[10px] text-center px-2 leading-tight font-mono">
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function WireButton({
+  label,
+  dark,
+  onClick,
+  small,
+  full,
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`border cursor-pointer font-mono text-[10px] tracking-wide whitespace-nowrap ${
+        small ? "px-3 py-1" : "px-4 py-2"
+      } ${full ? "w-full" : ""} ${
+        dark
+          ? "bg-[#333] text-white border-[#333]"
+          : "bg-white text-[#333] border-[#999]"
+      }`}
+    >
+      [ {label} ]
+    </button>
+  );
+}
+
+function NavBar({
+  current,
+  navigate,
+}) {
+  const [open, setOpen] = useState(false);
+  const links = [
+    { label: "Home", screen: "home" },
+    { label: "Dashboard", screen: "dashboard" },
+    { label: "Products", screen: "products" },
+    { label: "AI Insights", screen: "ai-insights" },
+  ];
+  return (
+    <header className="w-full border-b border-[#bbb] bg-white">
+      <div className="flex items-center justify-between px-4 sm:px-8 lg:px-10 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-[#d9d9d9] border border-[#999] flex items-center justify-center shrink-0">
+            <span className="text-[#555] text-[8px] font-mono">LOGO</span>
+          </div>
+          <span className="font-mono text-sm font-bold tracking-widest text-[#222]">
+            HerbSphere
+          </span>
+        </div>
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
+          {links.map((l) => (
+            <button
+              key={l.screen}
+              onClick={() => navigate(l.screen)}
+              className={`font-mono text-xs tracking-wide cursor-pointer border-b-2 pb-0.5 ${
+                current === l.screen
+                  ? "border-[#333] text-[#111]"
+                  : "border-transparent text-[#666] hover:text-[#333]"
+              }`}
+            >
+              {l.label}
+            </button>
+          ))}
+          <WireButton label="Login" onClick={() => navigate("login")} small />
+        </nav>
+
+        {/* Mobile hamburger */}
+        <button
+          className="md:hidden font-mono text-xs border border-[#bbb] px-3 py-1 text-[#555]"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? "[ X ]" : "[ Menu ]"}
+        </button>
+      </div>
+
+      {/* Mobile dropdown */}
+      {open && (
+        <div className="md:hidden border-t border-[#ddd] bg-white">
+          {links.map((l) => (
+            <button
+              key={l.screen}
+              onClick={() => { navigate(l.screen); setOpen(false); }}
+              className={`w-full text-left px-5 py-3 font-mono text-xs border-b border-[#f0f0f0] ${
+                current === l.screen ? "bg-[#f0f0f0] text-[#111]" : "text-[#555]"
+              }`}
+            >
+              {l.label}
+            </button>
+          ))}
+          <div className="px-5 py-3">
+            <WireButton label="Login" onClick={() => { navigate("login"); setOpen(false); }} small />
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
+
+function SectionLabel({ label }) {
+  return (
+    <div className="inline-block font-mono text-[9px] text-[#888] tracking-widest uppercase border border-[#ccc] px-2 py-0.5 mb-2">
+      {label}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="w-full border-t border-dashed border-[#ccc] my-5" />;
+}
+
+// Screen 1: Home
+
+function HomeScreen({ navigate }) {
+  return (
+    <div className="min-h-screen bg-white flex flex-col relative">
+      <NavBar current="home" navigate={navigate} />
+
+      {/* Hero */}
+      <section className="w-full border-b border-[#ddd] px-4 sm:px-8 lg:px-20 py-10 lg:py-16 bg-[#f5f5f5]">
+        <SectionLabel label="Hero Section" />
+        <div className="max-w-2xl">
+          <div className="h-3 bg-[#bbb] w-full sm:w-[520px] mb-3 rounded-sm" />
+          <div className="h-3 bg-[#bbb] w-4/5 sm:w-[380px] mb-5 rounded-sm" />
+          <div className="h-2 bg-[#ccc] w-full sm:w-[460px] mb-2 rounded-sm" />
+          <div className="h-2 bg-[#ccc] w-3/4 sm:w-[320px] mb-6 rounded-sm" />
+          <div className="flex flex-wrap gap-3">
+            <WireButton label="Get Started" dark onClick={() => navigate("dashboard")} />
+            <WireButton label="Learn More" />
+          </div>
+        </div>
+        <div className="mt-8">
+          <WireBox h="160px" label="[ Hero Banner Placeholder ]" />
+        </div>
+      </section>
+
+      {/* Featured Products */}
+      <section className="px-4 sm:px-8 lg:px-20 py-10 border-b border-[#ddd]">
+        <SectionLabel label="Featured Products Section" />
+        <div className="h-2 bg-[#bbb] w-40 mb-6 rounded-sm" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {["Product A - Lavender Oil", "Product B - Eucalyptus Blend", "Product C - Rose Water"].map(
+            (name) => (
+              <div key={name} className="border border-[#bbb] p-4 bg-white">
+                <WireBox h="140px" label="[ Product Image ]" className="mb-4" />
+                <div className="h-2 bg-[#bbb] w-36 mb-2 rounded-sm" />
+                <div className="font-mono text-xs text-[#555] mb-1">{name}</div>
+                <div className="h-2 bg-[#ccc] w-full mb-1 rounded-sm" />
+                <div className="h-2 bg-[#ccc] w-3/4 mb-4 rounded-sm" />
+                <WireButton label="View Product" small />
+              </div>
+            )
+          )}
+        </div>
+      </section>
+
+      {/* AI Insights Preview */}
+      <section className="px-4 sm:px-8 lg:px-20 py-10 border-b border-[#ddd] bg-[#f5f5f5]">
+        <SectionLabel label="AI Insights Preview" />
+        <div className="border border-[#bbb] bg-white p-6 lg:p-8">
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            <div className="flex-1">
+              <div className="h-3 bg-[#bbb] w-56 mb-3 rounded-sm" />
+              <div className="h-2 bg-[#ccc] w-full mb-2 rounded-sm" />
+              <div className="h-2 bg-[#ccc] w-5/6 mb-2 rounded-sm" />
+              <div className="h-2 bg-[#ccc] w-4/6 mb-6 rounded-sm" />
+              <WireButton label="Explore AI Insights" dark onClick={() => navigate("ai-insights")} />
+            </div>
+            <div className="w-full lg:w-80 shrink-0">
+              <WireBox h="160px" label="[ AI Analytics Preview Chart ]" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="px-4 sm:px-8 lg:px-20 py-10 bg-[#eee] border-t border-[#ccc] mt-auto">
+        <SectionLabel label="Footer" />
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          <div>
+            <div className="font-mono text-[10px] font-bold text-[#333] mb-3">QUICK LINKS</div>
+            {["Home", "Dashboard", "Products", "AI Insights", "About"].map((l) => (
+              <div key={l} className="h-2 bg-[#bbb] w-24 mb-2 rounded-sm" />
+            ))}
+          </div>
+          <div>
+            <div className="font-mono text-[10px] font-bold text-[#333] mb-3">PRODUCTS</div>
+            {["Essential Oils", "Aromatics", "Herbal Blends", "Wellness Kits"].map((l) => (
+              <div key={l} className="h-2 bg-[#bbb] w-28 mb-2 rounded-sm" />
+            ))}
+          </div>
+          <div>
+            <div className="font-mono text-[10px] font-bold text-[#333] mb-3">CONTACT</div>
+            <div className="h-2 bg-[#bbb] w-36 mb-2 rounded-sm" />
+            <div className="h-2 bg-[#bbb] w-28 mb-2 rounded-sm" />
+            <div className="h-2 bg-[#bbb] w-40 mb-2 rounded-sm" />
+          </div>
+          <div>
+            <div className="font-mono text-[10px] font-bold text-[#333] mb-3">NEWSLETTER</div>
+            <WireBox h="36px" label="[ Email Input ]" className="mb-2" />
+            <WireButton label="Subscribe" small />
+          </div>
+        </div>
+        <Divider />
+        <div className="font-mono text-[9px] text-[#999] text-center">
+          (c) 2026 HerbSphere. All rights reserved. | Privacy Policy | Terms of Use
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// Screen 2: Dashboard
+
+function DashboardScreen({ navigate }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col relative">
+      <NavBar current="dashboard" navigate={navigate} />
+      <div className="flex flex-1 relative">
+        {/* Mobile sidebar toggle */}
+        <button
+          className="lg:hidden absolute top-3 left-3 z-30 font-mono text-[10px] border border-[#bbb] bg-white px-2 py-1"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          {sidebarOpen ? "[ X Close ]" : "[ Menu ]"}
+        </button>
+
+        {/* Sidebar */}
+        <aside
+          className={`${
+            sidebarOpen ? "flex" : "hidden"
+          } lg:flex absolute lg:relative z-20 top-0 left-0 h-full w-52 border-r border-[#ddd] bg-[#f8f8f8] flex-col pt-6 shrink-0`}
+        >
+          <div className="px-5 mb-4">
+            <div className="font-mono text-[9px] text-[#999] tracking-widest">NAVIGATION</div>
+          </div>
+          {[
+            { label: "Dashboard", screen: "dashboard", active: true },
+            { label: "Products", screen: "products" },
+            { label: "Orders", screen: null },
+            { label: "Analytics", screen: null },
+            { label: "Settings", screen: null },
+          ].map((item) => (
+            <button
+              key={item.label}
+              onClick={() => { item.screen && navigate(item.screen); setSidebarOpen(false); }}
+              className={`w-full text-left px-5 py-3 font-mono text-xs cursor-pointer border-l-2 ${
+                item.active
+                  ? "border-[#333] bg-[#ebebeb] text-[#111]"
+                  : "border-transparent text-[#555] hover:bg-[#eee]"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+          <div className="mt-auto px-5 pb-6">
+            <WireBox h="80px" label="[ User Profile ]" />
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-6 pt-8 lg:pt-0">
+            <div>
+              <SectionLabel label="Main Content" />
+              <h1 className="font-mono text-base lg:text-lg font-bold text-[#222]">Business Dashboard</h1>
+              <div className="font-mono text-[9px] text-[#999]">Overview - June 2026</div>
+            </div>
+            <WireButton label="Export Report" small />
+          </div>
+
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {[
+              { label: "Total Revenue", value: "$84,320", sub: "+12% vs last month" },
+              { label: "Total Orders", value: "1,247", sub: "+8% vs last month" },
+              { label: "Inventory Items", value: "342", sub: "18 low stock alerts" },
+            ].map((card) => (
+              <div key={card.label} className="border border-[#bbb] bg-[#fafafa] p-4">
+                <div className="font-mono text-[9px] text-[#888] tracking-wide uppercase mb-2">
+                  {card.label}
+                </div>
+                <div className="font-mono text-xl lg:text-2xl font-bold text-[#222] mb-1">{card.value}</div>
+                <div className="font-mono text-[9px] text-[#666]">{card.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Chart */}
+          <div className="border border-[#bbb] bg-white p-4 lg:p-5 mb-6">
+            <SectionLabel label="Sales Analytics Chart" />
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div className="h-2 bg-[#bbb] w-36 rounded-sm" />
+              <div className="flex gap-1">
+                {["7D", "30D", "90D", "1Y"].map((t) => (
+                  <span key={t} className="font-mono text-[9px] border border-[#bbb] px-2 py-0.5 text-[#666]">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <WireBox h="200px" label="[ Sales Analytics Bar / Line Chart Placeholder ]" />
+            <div className="flex gap-4 mt-3">
+              {["Revenue", "Orders", "Returns"].map((l) => (
+                <div key={l} className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-[#bbb] border border-[#999] shrink-0" />
+                  <span className="font-mono text-[9px] text-[#666]">{l}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Orders Table */}
+          <div className="border border-[#bbb] bg-white p-4 lg:p-5">
+            <SectionLabel label="Recent Orders Table" />
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div className="h-2 bg-[#bbb] w-32 rounded-sm" />
+              <WireButton label="View All Orders" small />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full font-mono text-[10px] text-[#444] min-w-[560px]">
+                <thead>
+                  <tr className="border-b border-[#ddd]">
+                    {["Order ID", "Customer", "Product", "Amount", "Date", "Status"].map((h) => (
+                      <th key={h} className="text-left py-2 px-2 text-[#999] font-normal tracking-wide whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["#HS-2418", "Maria Santos", "Lavender Oil 50ml", "$28.50", "Jun 19, 2026", "Fulfilled"],
+                    ["#HS-2417", "James Okafor", "Eucalyptus Blend", "$45.00", "Jun 19, 2026", "Processing"],
+                    ["#HS-2416", "Priya Mehta", "Rose Water Kit", "$62.00", "Jun 18, 2026", "Fulfilled"],
+                    ["#HS-2415", "Lena Novak", "Peppermint Extract", "$19.99", "Jun 18, 2026", "Pending"],
+                    ["#HS-2414", "Tom Fischer", "Herbal Bundle", "$89.00", "Jun 17, 2026", "Fulfilled"],
+                  ].map((row, i) => (
+                    <tr key={i} className="border-b border-[#f0f0f0]">
+                      {row.map((cell, j) => (
+                        <td key={j} className="py-2 px-2 whitespace-nowrap">
+                          {j === 5 ? (
+                            <span className={`border px-2 py-0.5 text-[9px] ${
+                              cell === "Fulfilled"
+                                ? "border-[#aaa] text-[#444]"
+                                : cell === "Processing"
+                                ? "border-[#888] bg-[#eee] text-[#555]"
+                                : "border-[#bbb] text-[#999]"
+                            }`}>
+                              {cell}
+                            </span>
+                          ) : cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// Screen 3: Products
+
+function ProductsScreen({ navigate }) {
+  const [selected, setSelected] = useState(0);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const products = [
+    { name: "Lavender Essential Oil", stock: "In Stock", sku: "LAV-001", price: "$28.50", qty: 142 },
+    { name: "Eucalyptus Blend 100ml", stock: "In Stock", sku: "EUC-002", price: "$45.00", qty: 87 },
+    { name: "Rose Water Mist", stock: "Low Stock", sku: "ROS-003", price: "$22.00", qty: 14 },
+    { name: "Peppermint Extract", stock: "In Stock", sku: "PEP-004", price: "$19.99", qty: 203 },
+    { name: "Chamomile Tincture", stock: "Out of Stock", sku: "CHA-005", price: "$34.00", qty: 0 },
+    { name: "Bergamot Oil 30ml", stock: "In Stock", sku: "BER-006", price: "$38.50", qty: 66 },
+  ];
+
+  const sel = selected !== null ? products[selected] : null;
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col relative">
+      <NavBar current="products" navigate={navigate} />
+
+      <div className="flex flex-1 flex-col lg:flex-row">
+        {/* Product List */}
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 lg:border-r border-[#ddd] min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <SectionLabel label="Product List Section" />
+              <h1 className="font-mono text-base lg:text-lg font-bold text-[#222]">Products</h1>
+            </div>
+            <WireButton label="+ Add Product" dark onClick={() => navigate("ai-insights")} />
+          </div>
+
+          {/* Search + Filter */}
+          <div className="flex flex-wrap gap-2 mb-5">
+            <WireBox h="36px" label="[ Search products... ]" className="flex-1 min-w-[160px]" />
+            <div className="w-[120px]">
+              <WireBox h="36px" label="[ Category ]" />
+            </div>
+            <div className="w-[100px]">
+              <WireBox h="36px" label="[ Stock ]" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
+            {products.map((p, i) => (
+              <div
+                key={i}
+                className={`border p-3 cursor-pointer ${
+                  selected === i ? "border-[#333] bg-[#f0f0f0]" : "border-[#ccc] bg-white hover:bg-[#fafafa]"
+                }`}
+                onClick={() => { setSelected(i); setDetailOpen(true); }}
+              >
+                <WireBox h="110px" label={`[ ${p.sku} ]`} className="mb-3" />
+                <div className="font-mono text-[10px] font-bold text-[#222] mb-1 leading-tight">{p.name}</div>
+                <div className="font-mono text-[9px] text-[#888] mb-2">{p.sku}</div>
+                <div className="flex items-center justify-between gap-1 flex-wrap">
+                  <span className={`font-mono text-[9px] border px-1.5 py-0.5 ${
+                    p.stock === "In Stock"
+                      ? "border-[#aaa] text-[#444]"
+                      : p.stock === "Low Stock"
+                      ? "border-[#888] bg-[#eee] text-[#555]"
+                      : "border-[#ccc] text-[#aaa]"
+                  }`}>
+                    {p.stock}
+                  </span>
+                  <WireButton label="View" small onClick={() => { setSelected(i); setDetailOpen(true); }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Detail Panel - drawer on mobile, sidebar on desktop */}
+        {sel && (
+          <aside className={`${
+            detailOpen ? "fixed inset-0 z-30 bg-white overflow-auto lg:static lg:inset-auto lg:z-auto" : "hidden lg:block"
+          } w-full lg:w-80 p-5 lg:p-6 bg-[#f8f8f8] shrink-0 lg:border-l border-[#ddd]`}>
+            <div className="flex items-center justify-between mb-4 lg:mb-0">
+              <SectionLabel label="Product Detail Panel" />
+              <button
+                className="lg:hidden font-mono text-[10px] border border-[#bbb] px-2 py-1"
+                onClick={() => setDetailOpen(false)}
+              >
+                [ X Close ]
+              </button>
+            </div>
+            <WireBox h="180px" label="[ Product Image ]" className="mb-4" />
+            <div className="font-mono text-sm font-bold text-[#111] mb-1">{sel.name}</div>
+            <div className="font-mono text-[9px] text-[#999] mb-3">SKU: {sel.sku}</div>
+            <Divider />
+            <div className="font-mono text-[10px] text-[#555] mb-4 leading-relaxed">
+              High-quality herbal extract sourced from certified organic farms. Cold-pressed and third-party tested for purity.
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="border border-[#ccc] bg-white p-3">
+                <div className="font-mono text-[9px] text-[#999] mb-1">PRICE</div>
+                <div className="font-mono text-sm font-bold text-[#222]">{sel.price}</div>
+              </div>
+              <div className="border border-[#ccc] bg-white p-3">
+                <div className="font-mono text-[9px] text-[#999] mb-1">QTY IN STOCK</div>
+                <div className="font-mono text-sm font-bold text-[#222]">{sel.qty} units</div>
+              </div>
+            </div>
+            <div className="border border-[#ccc] bg-white p-3 mb-4">
+              <div className="font-mono text-[9px] text-[#999] mb-1">STOCK STATUS</div>
+              <div className="font-mono text-[10px] text-[#444]">{sel.stock}</div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <WireButton label="Update Product" dark full />
+              <WireButton label="View AI Insights" onClick={() => navigate("ai-insights")} full />
+            </div>
+          </aside>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Screen 4: Login / Signup
+
+function LoginScreen({ navigate }) {
+  const [mode, setMode] = useState("login");
+  return (
+    <div className="min-h-screen bg-[#f2f2f2] flex flex-col relative">
+      <header className="w-full border-b border-[#ccc] bg-white px-4 sm:px-8 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-[#d9d9d9] border border-[#999] flex items-center justify-center">
+            <span className="text-[#555] text-[8px] font-mono">LOGO</span>
+          </div>
+          <span className="font-mono text-sm font-bold tracking-widest text-[#222]">HerbSphere</span>
+        </div>
+        <button
+          onClick={() => navigate("home")}
+          className="font-mono text-[10px] text-[#666] cursor-pointer hover:text-[#333]"
+        >
+          &lt;- Back to Home
+        </button>
+      </header>
+
+      <div className="flex-1 flex items-center justify-center py-10 px-4">
+        <div className="w-full max-w-[440px]">
+          <div className="flex border border-[#bbb] mb-6 bg-white">
+            {["login", "signup"].map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`flex-1 py-2 font-mono text-[10px] tracking-widest uppercase cursor-pointer ${
+                  mode === m ? "bg-[#333] text-white" : "text-[#666] hover:bg-[#f5f5f5]"
+                }`}
+              >
+                {m === "login" ? "Log In" : "Sign Up"}
+              </button>
+            ))}
+          </div>
+
+          <div className="border border-[#bbb] bg-white p-6 sm:p-10">
+            <SectionLabel label="Authentication Card" />
+            <div className="flex justify-center mb-5">
+              <div className="w-14 h-14 bg-[#d9d9d9] border border-[#999] flex items-center justify-center">
+                <span className="font-mono text-[8px] text-[#555]">APP LOGO</span>
+              </div>
+            </div>
+
+            <div className="font-mono text-center text-sm font-bold text-[#222] mb-5">
+              {mode === "login" ? "Welcome back" : "Create your account"}
+            </div>
+
+            {mode === "signup" && (
+              <div className="mb-3">
+                <label className="font-mono text-[9px] text-[#666] block mb-1 tracking-wide">FULL NAME</label>
+                <WireBox h="40px" label="[ Full name input field ]" />
+              </div>
+            )}
+            <div className="mb-3">
+              <label className="font-mono text-[9px] text-[#666] block mb-1 tracking-wide">EMAIL ADDRESS</label>
+              <WireBox h="40px" label="[ Email input field ]" />
+            </div>
+            <div className="mb-4">
+              <label className="font-mono text-[9px] text-[#666] block mb-1 tracking-wide">PASSWORD</label>
+              <WireBox h="40px" label="[ Password input field ]" />
+            </div>
+
+            {mode === "login" && (
+              <div className="flex justify-end mb-4">
+                <span className="font-mono text-[9px] text-[#666] underline cursor-pointer">
+                  Forgot password?
+                </span>
+              </div>
+            )}
+
+            <WireButton label={mode === "login" ? "Log In" : "Create Account"} dark full onClick={() => navigate("dashboard")} />
+
+            <Divider />
+
+            <div className="font-mono text-[9px] text-center text-[#888]">
+              {mode === "login" ? (
+                <>Don&apos;t have an account?{" "}
+                  <span className="underline cursor-pointer text-[#555]" onClick={() => setMode("signup")}>Sign Up</span>
+                </>
+              ) : (
+                <>Already have an account?{" "}
+                  <span className="underline cursor-pointer text-[#555]" onClick={() => setMode("login")}>Log In</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="font-mono text-[9px] text-center text-[#bbb] mt-5">
+            By continuing you agree to our Terms of Service and Privacy Policy.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Screen 5: AI Insights
+
+function AIInsightsScreen({ navigate }) {
+  return (
+    <div className="min-h-screen bg-white flex flex-col relative">
+      <NavBar current="ai-insights" navigate={navigate} />
+
+      <main className="px-4 sm:px-8 lg:px-20 py-8">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-7">
+          <div>
+            <SectionLabel label="AI Insights Header" />
+            <h1 className="font-mono text-base lg:text-lg font-bold text-[#111]">AI Business Assistant</h1>
+            <div className="font-mono text-[9px] text-[#888] mt-1">
+              Powered by HerbSphere Intelligence Engine - Last updated: Jun 20, 2026
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <WireButton label="Refresh" small />
+            <WireButton label="Export" dark small />
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:grid lg:grid-cols-3 gap-5">
+          {/* Left column */}
+          <div className="lg:col-span-1 flex flex-col gap-5">
+            {/* Section 1: Upload */}
+            <div className="border border-[#bbb] p-4 lg:p-5 bg-[#fafafa]">
+              <SectionLabel label="Section 1 - Upload Data" />
+              <div className="font-mono text-xs font-bold text-[#222] mb-3">Upload Sales Data</div>
+              <WireBox h="90px" label="[ Drag & Drop - CSV, XLSX, JSON ]" className="mb-3" />
+              <div className="font-mono text-[9px] text-[#999] mb-3">
+                Supported: .csv / .xlsx / .json / Max 10MB
+              </div>
+              <WireButton label="Upload File" dark />
+            </div>
+
+            {/* Section 3: Recommendations */}
+            <div className="border border-[#bbb] p-4 lg:p-5 bg-[#fafafa]">
+              <SectionLabel label="Section 3 - Product Recommendations" />
+              <div className="font-mono text-xs font-bold text-[#222] mb-3">AI Product Recommendations</div>
+              <div className="flex flex-col gap-3">
+                {[
+                  { name: "Lavender Sleep Bundle", reason: "High seasonal demand predicted" },
+                  { name: "Citrus Boost Blend", reason: "Underperforming - reposition" },
+                  { name: "Eucalyptus Diffuser Kit", reason: "Cross-sell opportunity detected" },
+                ].map((rec, i) => (
+                  <div key={i} className="border border-[#ccc] bg-white p-3">
+                    <div className="font-mono text-[10px] font-bold text-[#222] mb-1">{rec.name}</div>
+                    <div className="font-mono text-[9px] text-[#777]">{rec.reason}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right columns */}
+          <div className="lg:col-span-2 flex flex-col gap-5">
+            {/* Section 2: Demand Forecasting */}
+            <div className="border border-[#bbb] p-4 lg:p-5 bg-white">
+              <SectionLabel label="Section 2 - Demand Forecasting" />
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <div className="font-mono text-xs font-bold text-[#222]">30-Day Demand Forecast</div>
+                <div className="flex gap-1 flex-wrap">
+                  {["All Products", "Top 10", "Low Stock"].map((f) => (
+                    <span key={f} className="font-mono text-[9px] border border-[#bbb] px-2 py-0.5 text-[#666]">
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <WireBox h="160px" label="[ Demand Forecast Line Chart - AI Prediction Overlay ]" className="mb-4" />
+              <div className="border border-[#ddd] bg-[#f7f7f7] p-4">
+                <div className="font-mono text-[9px] text-[#888] tracking-wide mb-2">AI PREDICTION SUMMARY</div>
+                <div className="flex flex-wrap gap-4 lg:gap-6">
+                  {[
+                    { label: "Predicted Demand Up", val: "+23% Lavender" },
+                    { label: "Restock Alert", val: "Rose Water (7 days)" },
+                    { label: "Slowmover", val: "Chamomile Tincture" },
+                  ].map((s) => (
+                    <div key={s.label}>
+                      <div className="font-mono text-[9px] text-[#999]">{s.label}</div>
+                      <div className="font-mono text-[10px] font-bold text-[#333]">{s.val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Marketing Generator */}
+            <div className="border border-[#bbb] p-4 lg:p-5 bg-white">
+              <SectionLabel label="Section 4 - Marketing Content Generator" />
+              <div className="font-mono text-xs font-bold text-[#222] mb-4">AI Marketing Content Generator</div>
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-mono text-[9px] text-[#666] block mb-1 tracking-wide">
+                    DESCRIBE YOUR PRODUCT / CAMPAIGN
+                  </label>
+                  <WireBox h="80px" label="[ Text input - describe product or goal... ]" className="mb-3" />
+                  <div className="flex gap-2 mb-3">
+                    <WireBox h="32px" label="[ Tone ]" className="flex-1" />
+                    <WireBox h="32px" label="[ Channel ]" className="flex-1" />
+                  </div>
+                  <WireButton label="Generate Content" dark />
+                </div>
+                <div>
+                  <label className="font-mono text-[9px] text-[#666] block mb-1 tracking-wide">
+                    GENERATED MARKETING CONTENT
+                  </label>
+                  <WireBox h="130px" label="[ AI-generated marketing copy will appear here ]" />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 5: AI Suggestions */}
+            <div className="border border-[#bbb] p-4 lg:p-5 bg-[#fafafa]">
+              <SectionLabel label="Section 5 - AI Suggestions" />
+              <div className="font-mono text-xs font-bold text-[#222] mb-4">AI-Generated Business Recommendations</div>
+              <div className="flex flex-col gap-2">
+                {[
+                  "Increase Lavender Oil production by ~30% ahead of Q3 aromatherapy season.",
+                  "Bundle Eucalyptus Blend with Peppermint Extract - cross-sell conversion predicted at 18%.",
+                  "Rose Water inventory critically low - reorder from Supplier B within 7 days.",
+                  "Run a promotional campaign for Chamomile Tincture - sales velocity dropped 22% this month.",
+                  "Consider discontinuing Jasmine Absolute SKU - margin below threshold for 3 consecutive quarters.",
+                  "Expand into corporate wellness segment - AI detects 34% unserved demand in your region.",
+                ].map((tip, i) => (
+                  <div key={i} className="flex gap-2 items-start border border-[#ddd] bg-white p-3">
+                    <div className="font-mono text-[9px] text-[#888] shrink-0 w-4">{i + 1}.</div>
+                    <div className="font-mono text-[9px] text-[#444] leading-relaxed flex-1">{tip}</div>
+                    <WireButton label="Apply" small />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// Root App
+
+export default function App() {
+  const [screen, setScreen] = useState("home");
+
+  function navigate(s) {
+    setScreen(s);
+    window.scrollTo(0, 0);
+  }
+
+  return (
+    <div className="w-full font-mono">
+      {screen === "home" && <HomeScreen navigate={navigate} />}
+      {screen === "dashboard" && <DashboardScreen navigate={navigate} />}
+      {screen === "products" && <ProductsScreen navigate={navigate} />}
+      {screen === "login" && <LoginScreen navigate={navigate} />}
+      {screen === "ai-insights" && <AIInsightsScreen navigate={navigate} />}
+    </div>
+  );
+}
