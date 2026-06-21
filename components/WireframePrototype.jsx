@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Moon, Sun } from "lucide-react";
 
 // Shared Components
 
@@ -46,9 +47,39 @@ function WireButton({
   );
 }
 
+function ThemeToggle({ theme, onToggle }) {
+  const isDark = theme === "dark";
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="relative inline-flex h-7 w-14 shrink-0 items-center border border-[#999] bg-white px-1 transition-colors duration-300 hover:bg-[#f5f5f5]"
+      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+      aria-pressed={isDark}
+    >
+      <span className="absolute left-2 text-[#777] transition-opacity duration-300">
+        <Sun size={12} strokeWidth={2} />
+      </span>
+      <span className="absolute right-2 text-[#777] transition-opacity duration-300">
+        <Moon size={12} strokeWidth={2} />
+      </span>
+      <span
+        className={`relative z-10 flex h-5 w-5 items-center justify-center border border-[#777] bg-[#333] text-white transition-transform duration-300 ease-out ${
+          isDark ? "translate-x-7" : "translate-x-0"
+        }`}
+      >
+        {isDark ? <Moon size={11} strokeWidth={2} /> : <Sun size={11} strokeWidth={2} />}
+      </span>
+    </button>
+  );
+}
+
 function NavBar({
   current,
   navigate,
+  theme,
+  onToggleTheme,
 }) {
   const [open, setOpen] = useState(false);
   const links = [
@@ -70,7 +101,7 @@ function NavBar({
         </div>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
+        <nav className="hidden md:flex items-center gap-4 lg:gap-6">
           {links.map((l) => (
             <button
               key={l.screen}
@@ -85,15 +116,18 @@ function NavBar({
             </button>
           ))}
           <WireButton label="Login" onClick={() => navigate("login")} small />
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </nav>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden font-mono text-xs border border-[#bbb] px-3 py-1 text-[#555]"
-          onClick={() => setOpen(!open)}
-        >
-          {open ? "[ X ]" : "[ Menu ]"}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          <button
+            className="font-mono text-xs border border-[#bbb] px-3 py-1 text-[#555]"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? "[ X ]" : "[ Menu ]"}
+          </button>
+        </div>
       </div>
 
       {/* Mobile dropdown */}
@@ -133,10 +167,10 @@ function Divider() {
 
 // Screen 1: Home
 
-function HomeScreen({ navigate }) {
+function HomeScreen({ navigate, theme, onToggleTheme }) {
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
-      <NavBar current="home" navigate={navigate} />
+      <NavBar current="home" navigate={navigate} theme={theme} onToggleTheme={onToggleTheme} />
 
       {/* Hero */}
       <section className="w-full border-b border-[#ddd] px-4 sm:px-8 lg:px-20 py-10 lg:py-16 bg-[#f5f5f5]">
@@ -234,12 +268,12 @@ function HomeScreen({ navigate }) {
 
 // Screen 2: Dashboard
 
-function DashboardScreen({ navigate }) {
+function DashboardScreen({ navigate, theme, onToggleTheme }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
-      <NavBar current="dashboard" navigate={navigate} />
+      <NavBar current="dashboard" navigate={navigate} theme={theme} onToggleTheme={onToggleTheme} />
       <div className="flex flex-1 relative">
         {/* Mobile sidebar toggle */}
         <button
@@ -390,7 +424,7 @@ function DashboardScreen({ navigate }) {
 
 // Screen 3: Products
 
-function ProductsScreen({ navigate }) {
+function ProductsScreen({ navigate, theme, onToggleTheme }) {
   const [selected, setSelected] = useState(0);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -407,7 +441,7 @@ function ProductsScreen({ navigate }) {
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
-      <NavBar current="products" navigate={navigate} />
+      <NavBar current="products" navigate={navigate} theme={theme} onToggleTheme={onToggleTheme} />
 
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Product List */}
@@ -508,7 +542,7 @@ function ProductsScreen({ navigate }) {
 
 // Screen 4: Login / Signup
 
-function LoginScreen({ navigate }) {
+function LoginScreen({ navigate, theme, onToggleTheme }) {
   const [mode, setMode] = useState("login");
   return (
     <div className="min-h-screen bg-[#f2f2f2] flex flex-col relative">
@@ -519,12 +553,15 @@ function LoginScreen({ navigate }) {
           </div>
           <span className="font-mono text-sm font-bold tracking-widest text-[#222]">HerbSphere</span>
         </div>
-        <button
-          onClick={() => navigate("home")}
-          className="font-mono text-[10px] text-[#666] cursor-pointer hover:text-[#333]"
-        >
-          &lt;- Back to Home
-        </button>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <button
+            onClick={() => navigate("home")}
+            className="font-mono text-[10px] text-[#666] cursor-pointer hover:text-[#333]"
+          >
+            &lt;- Back to Home
+          </button>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        </div>
       </header>
 
       <div className="flex-1 flex items-center justify-center py-10 px-4">
@@ -606,10 +643,10 @@ function LoginScreen({ navigate }) {
 
 // Screen 5: AI Insights
 
-function AIInsightsScreen({ navigate }) {
+function AIInsightsScreen({ navigate, theme, onToggleTheme }) {
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
-      <NavBar current="ai-insights" navigate={navigate} />
+      <NavBar current="ai-insights" navigate={navigate} theme={theme} onToggleTheme={onToggleTheme} />
 
       <main className="px-4 sm:px-8 lg:px-20 py-8">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-7">
@@ -749,19 +786,24 @@ function AIInsightsScreen({ navigate }) {
 
 export default function App() {
   const [screen, setScreen] = useState("home");
+  const [theme, setTheme] = useState("light");
 
   function navigate(s) {
     setScreen(s);
     window.scrollTo(0, 0);
   }
 
+  function toggleTheme() {
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
+  }
+
   return (
-    <div className="w-full font-mono">
-      {screen === "home" && <HomeScreen navigate={navigate} />}
-      {screen === "dashboard" && <DashboardScreen navigate={navigate} />}
-      {screen === "products" && <ProductsScreen navigate={navigate} />}
-      {screen === "login" && <LoginScreen navigate={navigate} />}
-      {screen === "ai-insights" && <AIInsightsScreen navigate={navigate} />}
+    <div className={`w-full font-mono wireframe-theme-${theme}`}>
+      {screen === "home" && <HomeScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
+      {screen === "dashboard" && <DashboardScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
+      {screen === "products" && <ProductsScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
+      {screen === "login" && <LoginScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
+      {screen === "ai-insights" && <AIInsightsScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
     </div>
   );
 }

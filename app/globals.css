@@ -25,3 +25,70 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+.wireframe-theme-dark {
+  color-scheme: dark;
+  background: #111;
+  color: #e5e5e5;
+}
+
+.wireframe-theme-dark .bg-white,
+.wireframe-theme-dark .bg-\[\#fafafa\],
+.wireframe-theme-dark .bg-\[\#f8f8f8\],
+.wireframe-theme-dark .bg-\[\#f7f7f7\],
+.wireframe-theme-dark .bg-\[\#f5f5f5\],
+.wireframe-theme-dark .bg-\[\#f2f2f2\],
+.wireframe-theme-dark .bg-\[\#eee\],
+.wireframe-theme-dark .bg-\[\#ebebeb\],
+.wireframe-theme-dark .bg-\[\#f0f0f0\] {
+  background-color: #171717 !important;
+}
+
+.wireframe-theme-dark .bg-\[\#d9d9d9\],
+.wireframe-theme-dark .bg-\[\#ccc\],
+.wireframe-theme-dark .bg-\[\#bbb\] {
+  background-color: #333 !important;
+}
+
+.wireframe-theme-dark .text-\[\#111\],
+.wireframe-theme-dark .text-\[\#222\],
+.wireframe-theme-dark .text-\[\#333\],
+.wireframe-theme-dark .text-\[\#444\],
+.wireframe-theme-dark .text-\[\#555\],
+.wireframe-theme-dark .text-\[\#666\],
+.wireframe-theme-dark .text-\[\#777\],
+.wireframe-theme-dark .text-\[\#888\],
+.wireframe-theme-dark .text-\[\#999\] {
+  color: #e5e5e5 !important;
+}
+
+.wireframe-theme-dark .border-\[\#bbb\],
+.wireframe-theme-dark .border-\[\#ccc\],
+.wireframe-theme-dark .border-\[\#ddd\],
+.wireframe-theme-dark .border-\[\#f0f0f0\],
+.wireframe-theme-dark .border-\[\#999\],
+.wireframe-theme-dark .border-\[\#888\],
+.wireframe-theme-dark .border-\[\#aaa\] {
+  border-color: #555 !important;
+}
+
+.wireframe-theme-dark .hover\:bg-\[\#f5f5f5\]:hover,
+.wireframe-theme-dark .hover\:bg-\[\#fafafa\]:hover,
+.wireframe-theme-dark .hover\:bg-\[\#eee\]:hover {
+  background-color: #262626 !important;
+}
+
+.wireframe-theme-dark input,
+.wireframe-theme-dark textarea {
+  background: #171717;
+  color: #e5e5e5;
+}
+
+.wireframe-theme-dark button[aria-pressed] {
+  background-color: #262626 !important;
+}
+
+.wireframe-theme-dark button[aria-pressed] > span:last-child {
+  background-color: #e5e5e5 !important;
+  color: #171717 !important;
+}
