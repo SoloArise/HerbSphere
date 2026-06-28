@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Sprout, UserRound, X } from "lucide-react";
+import { Menu, UserRound, X } from "lucide-react";
 import { useState } from "react";
 
 const navLinks = [
@@ -18,8 +18,12 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-herb-100 bg-white/95 shadow-sm backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold text-herb-900">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-herb-50 text-herb-600">
-            <Sprout size={21} />
+          <span className="brand-logo-frame flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-herb-100 bg-white">
+            <img
+              src="/logo.png"
+              alt="HerbSphere logo"
+              className="brand-logo h-full w-full scale-[1.85] object-cover"
+            />
           </span>
           <span>HerbSphere</span>
         </Link>

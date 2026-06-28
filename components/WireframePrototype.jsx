@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { Loader, toast } from "@/components/ui";
+
+const API_HOST = typeof window === "undefined" ? "localhost" : window.location.hostname;
+const API_BASE_URL = `http://${API_HOST}:5000`;
+const PRODUCTS_API_URL = `${API_BASE_URL}/api/products`;
+const DASHBOARD_API_URL = `${API_BASE_URL}/api/dashboard`;
+const INSIGHTS_API_URL = `${API_BASE_URL}/api/insights`;
 
 // Shared Components
 
@@ -44,6 +51,20 @@ function WireButton({
     >
       [ {label} ]
     </button>
+  );
+}
+
+function BrandLogo({ size = "md" }) {
+  const frameSize = size === "lg" ? "w-14 h-14" : "w-8 h-8";
+
+  return (
+    <div className={`${frameSize} brand-logo-frame overflow-hidden border border-[#999] bg-white shrink-0`}>
+      <img
+        src="/logo.png"
+        alt="HerbSphere logo"
+        className="brand-logo h-full w-full scale-[1.85] object-cover"
+      />
+    </div>
   );
 }
 
@@ -92,9 +113,7 @@ function NavBar({
     <header className="w-full border-b border-[#bbb] bg-white">
       <div className="flex items-center justify-between px-4 sm:px-8 lg:px-10 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#d9d9d9] border border-[#999] flex items-center justify-center shrink-0">
-            <span className="text-[#555] text-[8px] font-mono">LOGO</span>
-          </div>
+          <BrandLogo />
           <span className="font-mono text-sm font-bold tracking-widest text-[#222]">
             HerbSphere
           </span>
@@ -165,9 +184,23 @@ function Divider() {
   return <div className="w-full border-t border-dashed border-[#ccc] my-5" />;
 }
 
+function getStockStatus(stock) {
+  if (stock === 0) {
+    return "Out of Stock";
+  }
+
+  if (stock <= 20) {
+    return "Low Stock";
+  }
+
+  return "In Stock";
+}
+
 // Screen 1: Home
 
-function HomeScreen({ navigate, theme, onToggleTheme }) {
+function HomeScreen({ navigate, theme, onToggleTheme, products, loadingProducts }) {
+  const featuredProducts = products.slice(0, 3);
+
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
       <NavBar current="home" navigate={navigate} theme={theme} onToggleTheme={onToggleTheme} />
@@ -194,20 +227,24 @@ function HomeScreen({ navigate, theme, onToggleTheme }) {
       <section className="px-4 sm:px-8 lg:px-20 py-10 border-b border-[#ddd]">
         <SectionLabel label="Featured Products Section" />
         <div className="h-2 bg-[#bbb] w-40 mb-6 rounded-sm" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {["Product A - Lavender Oil", "Product B - Eucalyptus Blend", "Product C - Rose Water"].map(
-            (name) => (
-              <div key={name} className="border border-[#bbb] p-4 bg-white">
-                <WireBox h="140px" label="[ Product Image ]" className="mb-4" />
-                <div className="h-2 bg-[#bbb] w-36 mb-2 rounded-sm" />
-                <div className="font-mono text-xs text-[#555] mb-1">{name}</div>
-                <div className="h-2 bg-[#ccc] w-full mb-1 rounded-sm" />
-                <div className="h-2 bg-[#ccc] w-3/4 mb-4 rounded-sm" />
-                <WireButton label="View Product" small />
-              </div>
-            )
-          )}
-        </div>
+        {loadingProducts ? (
+          <div className="flex min-h-[180px] items-center justify-center border border-[#bbb] bg-white">
+            <Loader label="LOADING PRODUCTS" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {featuredProducts.map((product) => (
+                <div key={product.id} className="border border-[#bbb] p-4 bg-white">
+                  <WireBox h="140px" label="[ Product Image ]" className="mb-4" />
+                  <div className="h-2 bg-[#bbb] w-36 mb-2 rounded-sm" />
+                  <div className="font-mono text-xs text-[#555] mb-1">{product.name}</div>
+                  <div className="font-mono text-[9px] text-[#777] mb-1">{product.category}</div>
+                  <div className="font-mono text-[9px] text-[#777] mb-4">{product.description}</div>
+                  <WireButton label="View Product" small onClick={() => navigate("products")} />
+                </div>
+              ))}
+          </div>
+        )}
       </section>
 
       {/* AI Insights Preview */}
@@ -268,8 +305,10 @@ function HomeScreen({ navigate, theme, onToggleTheme }) {
 
 // Screen 2: Dashboard
 
-function DashboardScreen({ navigate, theme, onToggleTheme }) {
+function DashboardScreen({ navigate, theme, onToggleTheme, dashboardData, loadingDashboard }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const metrics = dashboardData?.metrics || [];
+  const orders = dashboardData?.orders || [];
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
@@ -322,27 +361,31 @@ function DashboardScreen({ navigate, theme, onToggleTheme }) {
             <div>
               <SectionLabel label="Main Content" />
               <h1 className="font-mono text-base lg:text-lg font-bold text-[#222]">Business Dashboard</h1>
-              <div className="font-mono text-[9px] text-[#999]">Overview - June 2026</div>
+              <div className="font-mono text-[9px] text-[#999]">
+                Overview - {dashboardData?.period || "Loading"}
+              </div>
             </div>
             <WireButton label="Export Report" small />
           </div>
 
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {[
-              { label: "Total Revenue", value: "$84,320", sub: "+12% vs last month" },
-              { label: "Total Orders", value: "1,247", sub: "+8% vs last month" },
-              { label: "Inventory Items", value: "342", sub: "18 low stock alerts" },
-            ].map((card) => (
-              <div key={card.label} className="border border-[#bbb] bg-[#fafafa] p-4">
-                <div className="font-mono text-[9px] text-[#888] tracking-wide uppercase mb-2">
-                  {card.label}
+          {loadingDashboard ? (
+            <div className="mb-6 flex min-h-[120px] items-center justify-center border border-[#bbb] bg-white">
+              <Loader label="LOADING DASHBOARD" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              {metrics.map((card) => (
+                <div key={card.label} className="border border-[#bbb] bg-[#fafafa] p-4">
+                  <div className="font-mono text-[9px] text-[#888] tracking-wide uppercase mb-2">
+                    {card.label}
+                  </div>
+                  <div className="font-mono text-xl lg:text-2xl font-bold text-[#222] mb-1">{card.value}</div>
+                  <div className="font-mono text-[9px] text-[#666]">{card.sub}</div>
                 </div>
-                <div className="font-mono text-xl lg:text-2xl font-bold text-[#222] mb-1">{card.value}</div>
-                <div className="font-mono text-[9px] text-[#666]">{card.sub}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Chart */}
           <div className="border border-[#bbb] bg-white p-4 lg:p-5 mb-6">
@@ -387,17 +430,18 @@ function DashboardScreen({ navigate, theme, onToggleTheme }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    ["#HS-2418", "Maria Santos", "Lavender Oil 50ml", "$28.50", "Jun 19, 2026", "Fulfilled"],
-                    ["#HS-2417", "James Okafor", "Eucalyptus Blend", "$45.00", "Jun 19, 2026", "Processing"],
-                    ["#HS-2416", "Priya Mehta", "Rose Water Kit", "$62.00", "Jun 18, 2026", "Fulfilled"],
-                    ["#HS-2415", "Lena Novak", "Peppermint Extract", "$19.99", "Jun 18, 2026", "Pending"],
-                    ["#HS-2414", "Tom Fischer", "Herbal Bundle", "$89.00", "Jun 17, 2026", "Fulfilled"],
-                  ].map((row, i) => (
-                    <tr key={i} className="border-b border-[#f0f0f0]">
-                      {row.map((cell, j) => (
-                        <td key={j} className="py-2 px-2 whitespace-nowrap">
-                          {j === 5 ? (
+                  {loadingDashboard ? (
+                    <tr>
+                      <td colSpan={6} className="py-10">
+                        <Loader label="LOADING ORDERS" />
+                      </td>
+                    </tr>
+                  ) : (
+                    orders.map((order) => (
+                      <tr key={order.id} className="border-b border-[#f0f0f0]">
+                        {[order.id, order.customer, order.product, order.amount, order.date, order.status].map((cell, j) => (
+                          <td key={`${order.id}-${j}`} className="py-2 px-2 whitespace-nowrap">
+                            {j === 5 ? (
                             <span className={`border px-2 py-0.5 text-[9px] ${
                               cell === "Fulfilled"
                                 ? "border-[#aaa] text-[#444]"
@@ -407,11 +451,12 @@ function DashboardScreen({ navigate, theme, onToggleTheme }) {
                             }`}>
                               {cell}
                             </span>
-                          ) : cell}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                            ) : cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -424,18 +469,23 @@ function DashboardScreen({ navigate, theme, onToggleTheme }) {
 
 // Screen 3: Products
 
-function ProductsScreen({ navigate, theme, onToggleTheme }) {
+function ProductsScreen({
+  navigate,
+  theme,
+  onToggleTheme,
+  products,
+  loadingProducts,
+  searchQuery,
+  onSearchQueryChange,
+}) {
   const [selected, setSelected] = useState(0);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  const products = [
-    { name: "Lavender Essential Oil", stock: "In Stock", sku: "LAV-001", price: "$28.50", qty: 142 },
-    { name: "Eucalyptus Blend 100ml", stock: "In Stock", sku: "EUC-002", price: "$45.00", qty: 87 },
-    { name: "Rose Water Mist", stock: "Low Stock", sku: "ROS-003", price: "$22.00", qty: 14 },
-    { name: "Peppermint Extract", stock: "In Stock", sku: "PEP-004", price: "$19.99", qty: 203 },
-    { name: "Chamomile Tincture", stock: "Out of Stock", sku: "CHA-005", price: "$34.00", qty: 0 },
-    { name: "Bergamot Oil 30ml", stock: "In Stock", sku: "BER-006", price: "$38.50", qty: 66 },
-  ];
+  useEffect(() => {
+    if (selected >= products.length) {
+      setSelected(products.length ? 0 : null);
+    }
+  }, [products.length, selected]);
 
   const sel = selected !== null ? products[selected] : null;
 
@@ -456,7 +506,13 @@ function ProductsScreen({ navigate, theme, onToggleTheme }) {
 
           {/* Search + Filter */}
           <div className="flex flex-wrap gap-2 mb-5">
-            <WireBox h="36px" label="[ Search products... ]" className="flex-1 min-w-[160px]" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => onSearchQueryChange(event.target.value)}
+              placeholder="Search products..."
+              className="h-9 flex-1 min-w-[160px] border border-[#999] bg-white px-3 font-mono text-[10px] text-[#333] outline-none placeholder:text-[#777] focus:border-[#333]"
+            />
             <div className="w-[120px]">
               <WireBox h="36px" label="[ Category ]" />
             </div>
@@ -465,33 +521,48 @@ function ProductsScreen({ navigate, theme, onToggleTheme }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
-            {products.map((p, i) => (
-              <div
-                key={i}
-                className={`border p-3 cursor-pointer ${
-                  selected === i ? "border-[#333] bg-[#f0f0f0]" : "border-[#ccc] bg-white hover:bg-[#fafafa]"
-                }`}
-                onClick={() => { setSelected(i); setDetailOpen(true); }}
-              >
-                <WireBox h="110px" label={`[ ${p.sku} ]`} className="mb-3" />
-                <div className="font-mono text-[10px] font-bold text-[#222] mb-1 leading-tight">{p.name}</div>
-                <div className="font-mono text-[9px] text-[#888] mb-2">{p.sku}</div>
-                <div className="flex items-center justify-between gap-1 flex-wrap">
-                  <span className={`font-mono text-[9px] border px-1.5 py-0.5 ${
-                    p.stock === "In Stock"
-                      ? "border-[#aaa] text-[#444]"
-                      : p.stock === "Low Stock"
-                      ? "border-[#888] bg-[#eee] text-[#555]"
-                      : "border-[#ccc] text-[#aaa]"
-                  }`}>
-                    {p.stock}
-                  </span>
-                  <WireButton label="View" small onClick={() => { setSelected(i); setDetailOpen(true); }} />
-                </div>
-              </div>
-            ))}
-          </div>
+          {loadingProducts ? (
+            <div className="flex min-h-[260px] items-center justify-center border border-[#bbb] bg-white">
+              <Loader label="LOADING PRODUCTS" />
+            </div>
+          ) : products.length === 0 ? (
+            <div className="border border-[#bbb] bg-white p-6 font-mono text-[10px] text-[#666]">
+              No products available.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
+              {products.map((p, i) => {
+                const stockStatus = getStockStatus(p.stock);
+                const sku = `HS-${String(p.id).padStart(3, "0")}`;
+
+                return (
+                  <div
+                    key={p.id}
+                    className={`border p-3 cursor-pointer ${
+                      selected === i ? "border-[#333] bg-[#f0f0f0]" : "border-[#ccc] bg-white hover:bg-[#fafafa]"
+                    }`}
+                    onClick={() => { setSelected(i); setDetailOpen(true); }}
+                  >
+                    <WireBox h="110px" label={`[ ${sku} ]`} className="mb-3" />
+                    <div className="font-mono text-[10px] font-bold text-[#222] mb-1 leading-tight">{p.name}</div>
+                    <div className="font-mono text-[9px] text-[#888] mb-2">{p.category}</div>
+                    <div className="flex items-center justify-between gap-1 flex-wrap">
+                      <span className={`font-mono text-[9px] border px-1.5 py-0.5 ${
+                        stockStatus === "In Stock"
+                          ? "border-[#aaa] text-[#444]"
+                          : stockStatus === "Low Stock"
+                          ? "border-[#888] bg-[#eee] text-[#555]"
+                          : "border-[#ccc] text-[#aaa]"
+                      }`}>
+                        {stockStatus}
+                      </span>
+                      <WireButton label="View" small onClick={() => { setSelected(i); setDetailOpen(true); }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Detail Panel - drawer on mobile, sidebar on desktop */}
@@ -510,24 +581,24 @@ function ProductsScreen({ navigate, theme, onToggleTheme }) {
             </div>
             <WireBox h="180px" label="[ Product Image ]" className="mb-4" />
             <div className="font-mono text-sm font-bold text-[#111] mb-1">{sel.name}</div>
-            <div className="font-mono text-[9px] text-[#999] mb-3">SKU: {sel.sku}</div>
+            <div className="font-mono text-[9px] text-[#999] mb-3">SKU: HS-{String(sel.id).padStart(3, "0")}</div>
             <Divider />
             <div className="font-mono text-[10px] text-[#555] mb-4 leading-relaxed">
-              High-quality herbal extract sourced from certified organic farms. Cold-pressed and third-party tested for purity.
+              {sel.description}
             </div>
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="border border-[#ccc] bg-white p-3">
                 <div className="font-mono text-[9px] text-[#999] mb-1">PRICE</div>
-                <div className="font-mono text-sm font-bold text-[#222]">{sel.price}</div>
+                <div className="font-mono text-sm font-bold text-[#222]">Rs. {sel.price}</div>
               </div>
               <div className="border border-[#ccc] bg-white p-3">
                 <div className="font-mono text-[9px] text-[#999] mb-1">QTY IN STOCK</div>
-                <div className="font-mono text-sm font-bold text-[#222]">{sel.qty} units</div>
+                <div className="font-mono text-sm font-bold text-[#222]">{sel.stock} units</div>
               </div>
             </div>
             <div className="border border-[#ccc] bg-white p-3 mb-4">
               <div className="font-mono text-[9px] text-[#999] mb-1">STOCK STATUS</div>
-              <div className="font-mono text-[10px] text-[#444]">{sel.stock}</div>
+              <div className="font-mono text-[10px] text-[#444]">{getStockStatus(sel.stock)}</div>
             </div>
             <div className="flex flex-col gap-2">
               <WireButton label="Update Product" dark full />
@@ -548,9 +619,7 @@ function LoginScreen({ navigate, theme, onToggleTheme }) {
     <div className="min-h-screen bg-[#f2f2f2] flex flex-col relative">
       <header className="w-full border-b border-[#ccc] bg-white px-4 sm:px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#d9d9d9] border border-[#999] flex items-center justify-center">
-            <span className="text-[#555] text-[8px] font-mono">LOGO</span>
-          </div>
+          <BrandLogo />
           <span className="font-mono text-sm font-bold tracking-widest text-[#222]">HerbSphere</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
@@ -583,9 +652,7 @@ function LoginScreen({ navigate, theme, onToggleTheme }) {
           <div className="border border-[#bbb] bg-white p-6 sm:p-10">
             <SectionLabel label="Authentication Card" />
             <div className="flex justify-center mb-5">
-              <div className="w-14 h-14 bg-[#d9d9d9] border border-[#999] flex items-center justify-center">
-                <span className="font-mono text-[8px] text-[#555]">APP LOGO</span>
-              </div>
+              <BrandLogo size="lg" />
             </div>
 
             <div className="font-mono text-center text-sm font-bold text-[#222] mb-5">
@@ -643,7 +710,11 @@ function LoginScreen({ navigate, theme, onToggleTheme }) {
 
 // Screen 5: AI Insights
 
-function AIInsightsScreen({ navigate, theme, onToggleTheme }) {
+function AIInsightsScreen({ navigate, theme, onToggleTheme, insightsData, loadingInsights }) {
+  const recommendations = insightsData?.recommendations || [];
+  const forecastSummary = insightsData?.forecastSummary || [];
+  const suggestions = insightsData?.suggestions || [];
+
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
       <NavBar current="ai-insights" navigate={navigate} theme={theme} onToggleTheme={onToggleTheme} />
@@ -654,7 +725,7 @@ function AIInsightsScreen({ navigate, theme, onToggleTheme }) {
             <SectionLabel label="AI Insights Header" />
             <h1 className="font-mono text-base lg:text-lg font-bold text-[#111]">AI Business Assistant</h1>
             <div className="font-mono text-[9px] text-[#888] mt-1">
-              Powered by HerbSphere Intelligence Engine - Last updated: Jun 20, 2026
+              Powered by HerbSphere Intelligence Engine - Last updated: {insightsData?.lastUpdated || "Loading"}
             </div>
           </div>
           <div className="flex gap-2">
@@ -681,18 +752,20 @@ function AIInsightsScreen({ navigate, theme, onToggleTheme }) {
             <div className="border border-[#bbb] p-4 lg:p-5 bg-[#fafafa]">
               <SectionLabel label="Section 3 - Product Recommendations" />
               <div className="font-mono text-xs font-bold text-[#222] mb-3">AI Product Recommendations</div>
-              <div className="flex flex-col gap-3">
-                {[
-                  { name: "Lavender Sleep Bundle", reason: "High seasonal demand predicted" },
-                  { name: "Citrus Boost Blend", reason: "Underperforming - reposition" },
-                  { name: "Eucalyptus Diffuser Kit", reason: "Cross-sell opportunity detected" },
-                ].map((rec, i) => (
-                  <div key={i} className="border border-[#ccc] bg-white p-3">
-                    <div className="font-mono text-[10px] font-bold text-[#222] mb-1">{rec.name}</div>
-                    <div className="font-mono text-[9px] text-[#777]">{rec.reason}</div>
-                  </div>
-                ))}
-              </div>
+              {loadingInsights ? (
+                <div className="flex min-h-[120px] items-center justify-center border border-[#ccc] bg-white">
+                  <Loader label="LOADING INSIGHTS" />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {recommendations.map((rec) => (
+                    <div key={rec.name} className="border border-[#ccc] bg-white p-3">
+                      <div className="font-mono text-[10px] font-bold text-[#222] mb-1">{rec.name}</div>
+                      <div className="font-mono text-[9px] text-[#777]">{rec.reason}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -715,14 +788,12 @@ function AIInsightsScreen({ navigate, theme, onToggleTheme }) {
               <div className="border border-[#ddd] bg-[#f7f7f7] p-4">
                 <div className="font-mono text-[9px] text-[#888] tracking-wide mb-2">AI PREDICTION SUMMARY</div>
                 <div className="flex flex-wrap gap-4 lg:gap-6">
-                  {[
-                    { label: "Predicted Demand Up", val: "+23% Lavender" },
-                    { label: "Restock Alert", val: "Rose Water (7 days)" },
-                    { label: "Slowmover", val: "Chamomile Tincture" },
-                  ].map((s) => (
+                  {loadingInsights ? (
+                    <Loader label="LOADING FORECAST" />
+                  ) : forecastSummary.map((s) => (
                     <div key={s.label}>
                       <div className="font-mono text-[9px] text-[#999]">{s.label}</div>
-                      <div className="font-mono text-[10px] font-bold text-[#333]">{s.val}</div>
+                      <div className="font-mono text-[10px] font-bold text-[#333]">{s.value}</div>
                     </div>
                   ))}
                 </div>
@@ -758,22 +829,21 @@ function AIInsightsScreen({ navigate, theme, onToggleTheme }) {
             <div className="border border-[#bbb] p-4 lg:p-5 bg-[#fafafa]">
               <SectionLabel label="Section 5 - AI Suggestions" />
               <div className="font-mono text-xs font-bold text-[#222] mb-4">AI-Generated Business Recommendations</div>
-              <div className="flex flex-col gap-2">
-                {[
-                  "Increase Lavender Oil production by ~30% ahead of Q3 aromatherapy season.",
-                  "Bundle Eucalyptus Blend with Peppermint Extract - cross-sell conversion predicted at 18%.",
-                  "Rose Water inventory critically low - reorder from Supplier B within 7 days.",
-                  "Run a promotional campaign for Chamomile Tincture - sales velocity dropped 22% this month.",
-                  "Consider discontinuing Jasmine Absolute SKU - margin below threshold for 3 consecutive quarters.",
-                  "Expand into corporate wellness segment - AI detects 34% unserved demand in your region.",
-                ].map((tip, i) => (
-                  <div key={i} className="flex gap-2 items-start border border-[#ddd] bg-white p-3">
-                    <div className="font-mono text-[9px] text-[#888] shrink-0 w-4">{i + 1}.</div>
-                    <div className="font-mono text-[9px] text-[#444] leading-relaxed flex-1">{tip}</div>
-                    <WireButton label="Apply" small />
-                  </div>
-                ))}
-              </div>
+              {loadingInsights ? (
+                <div className="flex min-h-[160px] items-center justify-center border border-[#ddd] bg-white">
+                  <Loader label="LOADING SUGGESTIONS" />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {suggestions.map((tip, i) => (
+                    <div key={tip} className="flex gap-2 items-start border border-[#ddd] bg-white p-3">
+                      <div className="font-mono text-[9px] text-[#888] shrink-0 w-4">{i + 1}.</div>
+                      <div className="font-mono text-[9px] text-[#444] leading-relaxed flex-1">{tip}</div>
+                      <WireButton label="Apply" small />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -787,6 +857,111 @@ function AIInsightsScreen({ navigate, theme, onToggleTheme }) {
 export default function App() {
   const [screen, setScreen] = useState("home");
   const [theme, setTheme] = useState("light");
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+  const [insightsData, setInsightsData] = useState(null);
+  const [loadingInsights, setLoadingInsights] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadProducts() {
+      setLoadingProducts(true);
+
+      try {
+        const query = searchQuery.trim();
+        const url = query
+          ? `${PRODUCTS_API_URL}/search?q=${encodeURIComponent(query)}`
+          : PRODUCTS_API_URL;
+        const response = await fetch(url, { signal: controller.signal });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load products");
+        }
+
+        setProducts(result.data);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          return;
+        }
+
+        toast.error(error.message || "Unable to load products");
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingProducts(false);
+        }
+      }
+    }
+
+    const debounceId = window.setTimeout(loadProducts, searchQuery ? 300 : 0);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(debounceId);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadDashboard() {
+      try {
+        const response = await fetch(DASHBOARD_API_URL, { signal: controller.signal });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load dashboard");
+        }
+
+        setDashboardData(result.data);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          toast.error(error.message || "Unable to load dashboard");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingDashboard(false);
+        }
+      }
+    }
+
+    loadDashboard();
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadInsights() {
+      try {
+        const response = await fetch(INSIGHTS_API_URL, { signal: controller.signal });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load insights");
+        }
+
+        setInsightsData(result.data);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          toast.error(error.message || "Unable to load insights");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingInsights(false);
+        }
+      }
+    }
+
+    loadInsights();
+
+    return () => controller.abort();
+  }, []);
 
   function navigate(s) {
     setScreen(s);
@@ -799,11 +974,45 @@ export default function App() {
 
   return (
     <div className={`w-full font-mono wireframe-theme-${theme}`}>
-      {screen === "home" && <HomeScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
-      {screen === "dashboard" && <DashboardScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
-      {screen === "products" && <ProductsScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
+      {screen === "home" && (
+        <HomeScreen
+          navigate={navigate}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          products={products}
+          loadingProducts={loadingProducts}
+        />
+      )}
+      {screen === "dashboard" && (
+        <DashboardScreen
+          navigate={navigate}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          dashboardData={dashboardData}
+          loadingDashboard={loadingDashboard}
+        />
+      )}
+      {screen === "products" && (
+        <ProductsScreen
+          navigate={navigate}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          products={products}
+          loadingProducts={loadingProducts}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+        />
+      )}
       {screen === "login" && <LoginScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
-      {screen === "ai-insights" && <AIInsightsScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}
+      {screen === "ai-insights" && (
+        <AIInsightsScreen
+          navigate={navigate}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          insightsData={insightsData}
+          loadingInsights={loadingInsights}
+        />
+      )}
     </div>
   );
 }

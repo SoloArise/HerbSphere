@@ -26,10 +26,27 @@ a {
   text-decoration: none;
 }
 
+.brand-logo-frame {
+  background: #fff;
+}
+
+.brand-logo {
+  display: block;
+  transition: filter 180ms ease, opacity 180ms ease;
+}
+
 .wireframe-theme-dark {
   color-scheme: dark;
   background: #111;
   color: #e5e5e5;
+}
+
+.wireframe-theme-dark .brand-logo-frame {
+  background: #111 !important;
+}
+
+.wireframe-theme-dark .brand-logo {
+  filter: invert(1) contrast(1.08);
 }
 
 .wireframe-theme-dark .bg-white,
