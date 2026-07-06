@@ -477,9 +477,30 @@ function ProductsScreen({
   loadingProducts,
   searchQuery,
   onSearchQueryChange,
+  refreshProducts,
 }) {
   const [selected, setSelected] = useState(0);
   const [detailOpen, setDetailOpen] = useState(false);
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const [addForm, setAddForm] = useState({
+    name: "",
+    category: "",
+    price: "",
+    stock: "",
+    description: "",
+  });
+
+  const [editForm, setEditForm] = useState({
+    name: "",
+    category: "",
+    price: "",
+    stock: "",
+    description: "",
+  });
 
   useEffect(() => {
     if (selected >= products.length) {
@@ -488,6 +509,101 @@ function ProductsScreen({
   }, [products.length, selected]);
 
   const sel = selected !== null ? products[selected] : null;
+
+  useEffect(() => {
+    if (sel) {
+      setEditForm({
+        name: sel.name || "",
+        category: sel.category || "",
+        price: sel.price !== undefined ? String(sel.price) : "",
+        stock: sel.stock !== undefined ? String(sel.stock) : "",
+        description: sel.description || "",
+      });
+    }
+  }, [sel, isEditOpen]);
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
+    const { name, category, price, stock, description } = addForm;
+    if (!name || !category || price === "" || stock === "" || !description) {
+      toast.error("All fields are required");
+      return;
+    }
+    try {
+      const response = await fetch(PRODUCTS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          category: category.trim(),
+          price: Number(price),
+          stock: Number(stock),
+          description: description.trim(),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to create product");
+      }
+      toast.success("Product created successfully!");
+      setIsAddOpen(false);
+      setAddForm({ name: "", category: "", price: "", stock: "", description: "" });
+      if (refreshProducts) refreshProducts();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const { name, category, price, stock, description } = editForm;
+    if (!name || !category || price === "" || stock === "" || !description) {
+      toast.error("All fields are required");
+      return;
+    }
+    try {
+      const id = sel._id || sel.id;
+      const response = await fetch(`${PRODUCTS_API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          category: category.trim(),
+          price: Number(price),
+          stock: Number(stock),
+          description: description.trim(),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to update product");
+      }
+      toast.success("Product updated successfully!");
+      setIsEditOpen(false);
+      if (refreshProducts) refreshProducts();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const id = sel._id || sel.id;
+      const response = await fetch(`${PRODUCTS_API_URL}/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete product");
+      }
+      toast.success("Product deleted successfully!");
+      setIsDeleteOpen(false);
+      setDetailOpen(false);
+      setSelected(products.length > 1 ? 0 : null);
+      if (refreshProducts) refreshProducts();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
@@ -501,7 +617,7 @@ function ProductsScreen({
               <SectionLabel label="Product List Section" />
               <h1 className="font-mono text-base lg:text-lg font-bold text-[#222]">Products</h1>
             </div>
-            <WireButton label="+ Add Product" dark onClick={() => navigate("ai-insights")} />
+            <WireButton label="+ Add Product" dark onClick={() => setIsAddOpen(true)} />
           </div>
 
           {/* Search + Filter */}
@@ -533,11 +649,11 @@ function ProductsScreen({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
               {products.map((p, i) => {
                 const stockStatus = getStockStatus(p.stock);
-                const sku = `HS-${String(p.id).padStart(3, "0")}`;
+                const sku = `HS-${String(p.id || p._id).substring(p.id ? 0 : 20).padStart(3, "0")}`;
 
                 return (
                   <div
-                    key={p.id}
+                    key={p._id || p.id}
                     className={`border p-3 cursor-pointer ${
                       selected === i ? "border-[#333] bg-[#f0f0f0]" : "border-[#ccc] bg-white hover:bg-[#fafafa]"
                     }`}
@@ -549,10 +665,10 @@ function ProductsScreen({
                     <div className="flex items-center justify-between gap-1 flex-wrap">
                       <span className={`font-mono text-[9px] border px-1.5 py-0.5 ${
                         stockStatus === "In Stock"
-                          ? "border-[#aaa] text-[#444]"
-                          : stockStatus === "Low Stock"
-                          ? "border-[#888] bg-[#eee] text-[#555]"
-                          : "border-[#ccc] text-[#aaa]"
+                           ? "border-[#aaa] text-[#444]"
+                           : stockStatus === "Low Stock"
+                           ? "border-[#888] bg-[#eee] text-[#555]"
+                           : "border-[#ccc] text-[#aaa]"
                       }`}>
                         {stockStatus}
                       </span>
@@ -581,7 +697,7 @@ function ProductsScreen({
             </div>
             <WireBox h="180px" label="[ Product Image ]" className="mb-4" />
             <div className="font-mono text-sm font-bold text-[#111] mb-1">{sel.name}</div>
-            <div className="font-mono text-[9px] text-[#999] mb-3">SKU: HS-{String(sel.id).padStart(3, "0")}</div>
+            <div className="font-mono text-[9px] text-[#999] mb-3">SKU: HS-{String(sel.id || sel._id).substring(sel.id ? 0 : 20).padStart(3, "0")}</div>
             <Divider />
             <div className="font-mono text-[10px] text-[#555] mb-4 leading-relaxed">
               {sel.description}
@@ -601,12 +717,176 @@ function ProductsScreen({
               <div className="font-mono text-[10px] text-[#444]">{getStockStatus(sel.stock)}</div>
             </div>
             <div className="flex flex-col gap-2">
-              <WireButton label="Update Product" dark full />
+              <WireButton label="Update Product" onClick={() => setIsEditOpen(true)} dark full />
+              <WireButton label="Delete Product" onClick={() => setIsDeleteOpen(true)} full />
               <WireButton label="View AI Insights" onClick={() => navigate("ai-insights")} full />
             </div>
           </aside>
         )}
       </div>
+
+      {/* Add Product Modal */}
+      {isAddOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md border border-[#999] bg-white p-6 shadow-md font-mono">
+            <div className="flex justify-between items-center border-b border-[#ddd] pb-2 mb-4">
+              <span className="font-bold text-xs">[ Add Product ]</span>
+              <button className="text-[10px] border border-[#bbb] px-2 py-0.5" onClick={() => setIsAddOpen(false)}>[ Close ]</button>
+            </div>
+            <form onSubmit={handleAddSubmit} className="flex flex-col gap-3">
+              <div>
+                <label className="text-[9px] text-[#777] block mb-1">NAME</label>
+                <input
+                  type="text"
+                  required
+                  value={addForm.name}
+                  onChange={e => setAddForm({ ...addForm, name: e.target.value })}
+                  className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333]"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] text-[#777] block mb-1">CATEGORY</label>
+                <input
+                  type="text"
+                  required
+                  value={addForm.category}
+                  onChange={e => setAddForm({ ...addForm, category: e.target.value })}
+                  className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[9px] text-[#777] block mb-1">PRICE (Rs.)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={addForm.price}
+                    onChange={e => setAddForm({ ...addForm, price: e.target.value })}
+                    className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] text-[#777] block mb-1">STOCK (Units)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={addForm.stock}
+                    onChange={e => setAddForm({ ...addForm, stock: e.target.value })}
+                    className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[9px] text-[#777] block mb-1">DESCRIPTION</label>
+                <textarea
+                  required
+                  rows="3"
+                  value={addForm.description}
+                  onChange={e => setAddForm({ ...addForm, description: e.target.value })}
+                  className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333] resize-none"
+                />
+              </div>
+              <div className="mt-2 flex gap-2">
+                <button type="submit" className="flex-1 bg-[#333] text-white border border-[#333] py-2 text-[10px] font-bold">[ Create ]</button>
+                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 bg-white text-[#333] border border-[#999] py-2 text-[10px] font-bold">[ Cancel ]</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {isEditOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md border border-[#999] bg-white p-6 shadow-md font-mono">
+            <div className="flex justify-between items-center border-b border-[#ddd] pb-2 mb-4">
+              <span className="font-bold text-xs">[ Edit Product ]</span>
+              <button className="text-[10px] border border-[#bbb] px-2 py-0.5" onClick={() => setIsEditOpen(false)}>[ Close ]</button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="flex flex-col gap-3">
+              <div>
+                <label className="text-[9px] text-[#777] block mb-1">NAME</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333]"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] text-[#777] block mb-1">CATEGORY</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.category}
+                  onChange={e => setEditForm({ ...editForm, category: e.target.value })}
+                  className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[9px] text-[#777] block mb-1">PRICE (Rs.)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={editForm.price}
+                    onChange={e => setEditForm({ ...editForm, price: e.target.value })}
+                    className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] text-[#777] block mb-1">STOCK (Units)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={editForm.stock}
+                    onChange={e => setEditForm({ ...editForm, stock: e.target.value })}
+                    className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[9px] text-[#777] block mb-1">DESCRIPTION</label>
+                <textarea
+                  required
+                  rows="3"
+                  value={editForm.description}
+                  onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full border border-[#999] px-2 py-1.5 text-[10px] outline-none focus:border-[#333] resize-none"
+                />
+              </div>
+              <div className="mt-2 flex gap-2">
+                <button type="submit" className="flex-1 bg-[#333] text-white border border-[#333] py-2 text-[10px] font-bold">[ Update ]</button>
+                <button type="button" onClick={() => setIsEditOpen(false)} className="flex-1 bg-white text-[#333] border border-[#999] py-2 text-[10px] font-bold">[ Cancel ]</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Product Confirmation Modal */}
+      {isDeleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm border border-[#999] bg-white p-6 shadow-md font-mono">
+            <div className="flex justify-between items-center border-b border-[#ddd] pb-2 mb-4">
+              <span className="font-bold text-xs">[ Delete Product ]</span>
+              <button className="text-[10px] border border-[#bbb] px-2 py-0.5" onClick={() => setIsDeleteOpen(false)}>[ Close ]</button>
+            </div>
+            <div className="text-[10px] text-[#333] mb-4">
+              Are you sure you want to delete <span className="font-bold">{sel.name}</span>? This action cannot be undone.
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleDeleteConfirm} className="flex-1 bg-[#333] text-white border border-[#333] py-2 text-[10px] font-bold">[ Delete ]</button>
+              <button onClick={() => setIsDeleteOpen(false)} className="flex-1 bg-white text-[#333] border border-[#999] py-2 text-[10px] font-bold">[ Cancel ]</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -864,6 +1144,7 @@ export default function App() {
   const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [insightsData, setInsightsData] = useState(null);
   const [loadingInsights, setLoadingInsights] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -903,7 +1184,7 @@ export default function App() {
       controller.abort();
       window.clearTimeout(debounceId);
     };
-  }, [searchQuery]);
+  }, [searchQuery, refreshTrigger]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -932,7 +1213,7 @@ export default function App() {
     loadDashboard();
 
     return () => controller.abort();
-  }, []);
+  }, [refreshTrigger]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1001,6 +1282,9 @@ export default function App() {
           loadingProducts={loadingProducts}
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
+          refreshProducts={() => {
+            setRefreshTrigger((prev) => prev + 1);
+          }}
         />
       )}
       {screen === "login" && <LoginScreen navigate={navigate} theme={theme} onToggleTheme={toggleTheme} />}

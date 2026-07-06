@@ -1,9 +1,12 @@
 const cors = require("cors");
 const dotenv = require("dotenv");
 const express = require("express");
+const connectDB = require("./config/db");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const insightRoutes = require("./routes/insightRoutes");
 const productRoutes = require("./routes/productRoutes");
+const customerRoutes = require("./routes/customerRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 const { errorHandler, notFound } = require("./middleware/errorMiddleware");
 
 dotenv.config();
@@ -36,12 +39,17 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/products", productRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/orders", orderRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/insights", insightRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`HerbSphere backend running on port ${PORT}`);
+// Establish database connection, then start the server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`HerbSphere backend running on port ${PORT}`);
+  });
 });

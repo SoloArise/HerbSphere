@@ -120,22 +120,31 @@ Generate AI-powered:
 ```
 HerbSphere/
 │
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── components/ui/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── hooks/
-│   │   └── App.jsx
-│   │
-│   └── public/
+├── app/                  # Next.js App Router Pages
+├── components/           # React Frontend Components
+│   ├── ui/               # Reusable UI Controls (Loader, Toast)
+│   └── ...
 │
 ├── backend/
-│   ├── routes/
+│   ├── config/
+│   │   └── db.js         # MongoDB/Mongoose Connection Setup
+│   ├── models/
+│   │   ├── Product.js    # Product Schema & Model
+│   │   ├── Customer.js   # Customer Schema & Model
+│   │   └── Order.js      # Order Schema & Model
 │   ├── controllers/
-│   ├── data/
+│   │   ├── productController.js
+│   │   ├── customerController.js
+│   │   └── orderController.js
+│   ├── routes/
+│   │   ├── productRoutes.js
+│   │   ├── customerRoutes.js
+│   │   ├── orderRoutes.js
+│   │   ├── dashboardRoutes.js
+│   │   └── insightRoutes.js
 │   ├── middleware/
+│   │   └── errorMiddleware.js
+│   ├── data/             # Static/Fallback Data Templates
 │   ├── server.js
 │   └── package.json
 │
@@ -294,11 +303,91 @@ npm run dev
 | Week 2 | ✅ Frontend Skeleton |
 | Week 3 | ✅ UI Components & Responsive Design |
 | Week 4 | ✅ Backend REST APIs |
-| Week 5 | 🔄 MongoDB Integration |
+| Week 5 | ✅ MongoDB & Mongoose Integration |
 | Week 6 | 🔄 Authentication |
 | Week 7 | 🔄 AI Integration |
 | Week 8 | 🔄 Deployment |
 | Week 9 | 🔄 Final Presentation |
+
+---
+
+# 🗄️ Week 5: MongoDB Atlas & Mongoose Database Setup
+
+The backend has been upgraded from volatile in-memory arrays to a fully persistent, production-ready **MongoDB** database.
+
+## 1. Database Choice & Justification
+
+We chose **MongoDB** as our database for the following reasons:
+- **Flexible Document Schema**: Herbal product management involves diverse products with different attribute structures (e.g., teas, powders, capsules, essential oils). A document database allows storing fields dynamically without rigid, complex migration operations.
+- **Rich JSON Ecosystem Integration**: Since Next.js and Node.js use Javascript, JSON maps directly from MongoDB documents to the frontend without complex translation, optimizing data fetching speeds.
+- **Object Modeling via Mongoose**: Mongoose provides strong schema-based validation rules, automatic conversion of IDs to string formats (virtual `id`), and built-in `populate` functions for relational querying (e.g., resolving `customer` and `products` references in an `Order` document).
+
+## 2. Set Up the Database
+
+To set up the persistent database for local development:
+
+### 1. MongoDB Atlas Configuration
+1. **Create an Account**: Register at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. **Build a Cluster**: Create a **Free Shared M0 Cluster**.
+3. **Database User**: Add a database user with read/write permissions (use password authentication).
+4. **Network Access**: Add your current IP address to the Access List (or `0.0.0.0/0` to allow access from any machine).
+5. **Get Connection URI**: Click "Connect" -> "Drivers" -> Copy the connection string.
+
+### 2. Environment Configuration
+Create a `.env` file inside the `backend/` directory. Fill in your MongoDB connection details:
+```env
+PORT=5000
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.xxxx.mongodb.net/herbsphere?retryWrites=true&w=majority
+FRONTEND_ORIGIN=http://localhost:3000,http://127.0.0.1:3000
+```
+*Note: The `.env` file is gitignored. Ensure you do not commit active credentials.*
+
+### 3. Data Seeding
+Upon connecting to the database for the first time, the server will automatically run `seedDatabase()` to populate initial collections for `Product`, `Customer`, and `Order` if they are empty, giving you a functional database instantly.
+
+## 3. Database Relationship Diagram
+
+Below is the visual schema showing our database entities, their fields, and relationships:
+
+![HerbSphere Database Schema Diagram](./W5_SchemaDiagram_TBI-26100935.png)
+
+### Relationship Rules:
+- **Customer to Order**: A 1-to-many (`1 ----- *`) relationship. One customer can place multiple orders (tracked via the `customer` field in the Order model pointing to a Customer document).
+- **Product to Order**: A many-to-many (`* ----- *`) relationship implemented via an embedded array of product subdocuments inside the Order schema.
+
+## 4. Schema Definitions
+- `name` (String, Required)
+- `category` (String, Required)
+- `description` (String, Required)
+- `price` (Number, Required, >= 0)
+- `stock` (Number, Required, >= 0, Integer)
+- `image` (String, Optional)
+- `createdAt` / `updatedAt` (Timestamps)
+
+### Entity 2: Customer (`models/Customer.js`)
+- `name` (String, Required)
+- `email` (String, Required, Unique, Email format)
+- `phone` (String, Required)
+- `address` (String, Required)
+- `createdAt` / `updatedAt` (Timestamps)
+
+### Entity 3: Order (`models/Order.js`)
+- `customer` (ObjectId Reference, Ref: Customer, Required)
+- `products` (Array of subdocuments containing `{ product: ObjectId Ref: Product, quantity: Number }`)
+- `totalAmount` (Number, Required, >= 0)
+- `status` (String, Enum: `['Pending', 'Processing', 'Fulfilled']`, Default: `Pending`)
+- `createdAt` / `updatedAt` (Timestamps)
+
+---
+
+# 🤖 Centralized Error Handling
+
+The application features a centralized Express error handling middleware (`middleware/errorMiddleware.js`) which captures:
+- **Validation Errors**: Translates Mongoose validation messages into user-friendly `400 Bad Request` messages.
+- **Invalid MongoDB ObjectIds**: Intercepts `CastError` and returns `400 Bad Request` when queries are passed an invalid hex string.
+- **Resource Not Found**: Automatically handles queries for items that do not exist (returns `404 Not Found`).
+- **Duplicate Key Constraints**: Detects MongoDB `11000` codes (e.g. duplicate customer emails) and reports `400 Bad Request`.
+- **Internal Server Errors**: Logs details for debugging and outputs a generic `500 Server Error` payload to clients.
 
 ---
 
@@ -330,7 +419,6 @@ Coming Soon
 
 # 🔮 Upcoming Features
 
-- MongoDB Database
 - User Authentication
 - Admin Dashboard
 - AI Product Recommendation
