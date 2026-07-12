@@ -2,8 +2,11 @@ const express = require("express");
 const Product = require("../models/Product");
 const Customer = require("../models/Customer");
 const Order = require("../models/Order");
+const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
+router.use(protect);
 
 router.get("/", async (req, res, next) => {
   try {

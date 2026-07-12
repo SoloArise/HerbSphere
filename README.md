@@ -304,14 +304,14 @@ npm run dev
 | Week 3 | ✅ UI Components & Responsive Design |
 | Week 4 | ✅ Backend REST APIs |
 | Week 5 | ✅ MongoDB & Mongoose Integration |
-| Week 6 | 🔄 Authentication |
+| Week 6 | ✅ Authentication |
 | Week 7 | 🔄 AI Integration |
 | Week 8 | 🔄 Deployment |
 | Week 9 | 🔄 Final Presentation |
 
 ---
 
-# 🗄️ Week 5: MongoDB Atlas & Mongoose Database Setup
+# MongoDB Atlas & Mongoose Database Setup
 
 The backend has been upgraded from volatile in-memory arrays to a fully persistent, production-ready **MongoDB** database.
 
@@ -349,7 +349,14 @@ Upon connecting to the database for the first time, the server will automaticall
 
 Below is the visual schema showing our database entities, their fields, and relationships:
 
-![HerbSphere Database Schema Diagram](./W5_SchemaDiagram_TBI-26100935.png)
+<p align="center">
+  <img
+    src="https://github.com/user-attachments/assets/852fe536-6c96-482c-be56-f654799f776d"
+    alt="HerbSphere Database Schema Diagram"
+    width="1000"
+  />
+</p>
+
 
 ### Relationship Rules:
 - **Customer to Order**: A 1-to-many (`1 ----- *`) relationship. One customer can place multiple orders (tracked via the `customer` field in the Order model pointing to a Customer document).
@@ -377,6 +384,28 @@ Below is the visual schema showing our database entities, their fields, and rela
 - `totalAmount` (Number, Required, >= 0)
 - `status` (String, Enum: `['Pending', 'Processing', 'Fulfilled']`, Default: `Pending`)
 - `createdAt` / `updatedAt` (Timestamps)
+
+---
+
+# 🔐 Week 6: Authentication System (JWT & OAuth)
+
+The application has been upgraded with a secure, production-grade end-to-end Authentication & Authorization system.
+
+## 1. Features
+- **Local Credentials Auth**: Email & Password registration (using `bcrypt` salt hashing) and Login (exchanging credentials for a stateless JWT).
+- **JWT Protection**: Protected routes (`/api/dashboard`, `/api/customers`, `/api/orders`) intercept requests via `authMiddleware.js` and verify the JWT header payload. Bypassed requests receive a `401 Unauthorized` response.
+- **Frontend Guards**: Any unauthenticated client trying to access dashboard, inventory, customers, or orders is redirected to `/login` via `ProtectedRoute.jsx`.
+- **Google OAuth Integration**: Built-in OAuth flow utilizing `passport` and `passport-google-oauth20`.
+  - *Local Mock Mode*: If client credentials are not configured, the server automatically routes to a local mock Google Account Chooser screen at `/api/auth/mock-google-consent` to simplify offline testing and deliverable validation.
+- **Rate Limiting**: Integrated `express-rate-limit` restricting credentials endpoints (`/api/auth/login` and `/api/auth/register`) to 5 attempts per 15-minute window, returning a `429 Too Many Requests` status code.
+- **Input Validation**: `express-validator` validates fields (RFC standard emails, minimum 8 characters password) before hitting controllers.
+
+## 2. API Endpoints
+- `POST /api/auth/register` (Public) - Register new user
+- `POST /api/auth/login` (Public, Rate Limited) - Authenticate credentials and return JWT
+- `GET /api/auth/me` (Private) - Fetch profile for authenticated JWT user
+- `GET /api/auth/google` (Public) - Initiate Google OAuth login
+- `GET /api/auth/google/callback` (Public) - Google OAuth redirection handler
 
 ---
 
@@ -419,28 +448,12 @@ Coming Soon
 
 # 🔮 Upcoming Features
 
-- User Authentication
-- Admin Dashboard
 - AI Product Recommendation
-- Inventory Management
 - Sales Analytics
 - Report Generation
 - Cloud Deployment
 - Role-Based Access Control
 
----
-
-# 🤝 Contributing
-
-This project is currently being developed as part of the **TBI-GEU SIP 2026 Internship**.
-
-Suggestions and feedback are always welcome.
-
----
-
-# 📄 License
-
-This project is developed for educational and internship purposes.
 
 ---
 

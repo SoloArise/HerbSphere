@@ -7,11 +7,12 @@ const {
   deleteProduct,
   searchProducts,
 } = require("../controllers/productController");
+const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 router.get("/search", searchProducts);
-router.route("/").get(getAllProducts).post(createProduct);
-router.route("/:id").get(getProductById).put(updateProduct).delete(deleteProduct);
+router.route("/").get(getAllProducts).post(protect, createProduct);
+router.route("/:id").get(getProductById).put(protect, updateProduct).delete(protect, deleteProduct);
 
 module.exports = router;

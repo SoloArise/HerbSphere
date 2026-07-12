@@ -532,7 +532,10 @@ function ProductsScreen({
     try {
       const response = await fetch(PRODUCTS_API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}`
+        },
         body: JSON.stringify({
           name: name.trim(),
           category: category.trim(),
@@ -565,7 +568,10 @@ function ProductsScreen({
       const id = sel._id || sel.id;
       const response = await fetch(`${PRODUCTS_API_URL}/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}`
+        },
         body: JSON.stringify({
           name: name.trim(),
           category: category.trim(),
@@ -591,6 +597,9 @@ function ProductsScreen({
       const id = sel._id || sel.id;
       const response = await fetch(`${PRODUCTS_API_URL}/${id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}`
+        }
       });
       if (!response.ok) {
         throw new Error("Failed to delete product");
@@ -1191,7 +1200,12 @@ export default function App() {
 
     async function loadDashboard() {
       try {
-        const response = await fetch(DASHBOARD_API_URL, { signal: controller.signal });
+        const response = await fetch(DASHBOARD_API_URL, {
+          signal: controller.signal,
+          headers: {
+            "Authorization": `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}`
+          }
+        });
         const result = await response.json();
 
         if (!response.ok || !result.success) {
@@ -1220,7 +1234,12 @@ export default function App() {
 
     async function loadInsights() {
       try {
-        const response = await fetch(INSIGHTS_API_URL, { signal: controller.signal });
+        const response = await fetch(INSIGHTS_API_URL, {
+          signal: controller.signal,
+          headers: {
+            "Authorization": `Bearer ${typeof window !== "undefined" ? localStorage.getItem("token") : ""}`
+          }
+        });
         const result = await response.json();
 
         if (!response.ok || !result.success) {
@@ -1245,6 +1264,14 @@ export default function App() {
   }, []);
 
   function navigate(s) {
+    if (s === "login" || s === "signup") {
+      window.location.href = "/login";
+      return;
+    }
+    if (s === "dashboard") {
+      window.location.href = "/dashboard";
+      return;
+    }
     setScreen(s);
     window.scrollTo(0, 0);
   }

@@ -1,13 +1,18 @@
 const cors = require("cors");
 const dotenv = require("dotenv");
 const express = require("express");
+const session = require("express-session");
+const passport = require("passport");
 const connectDB = require("./config/db");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const insightRoutes = require("./routes/insightRoutes");
 const productRoutes = require("./routes/productRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const authRoutes = require("./routes/authRoutes");
 const { errorHandler, notFound } = require("./middleware/errorMiddleware");
+
+require("./config/passport");
 
 dotenv.config();
 
@@ -27,9 +32,23 @@ app.use(
 
       callback(new Error("Not allowed by CORS"));
     },
+    credentials: true,
   })
 );
+
 app.use(express.json());
+
+// Session middleware required by passport
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "herbsphere-session-secret",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -38,6 +57,7 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/orders", orderRoutes);
